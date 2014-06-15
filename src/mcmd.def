@@ -1,0 +1,7 @@
+LIBRARY "mcmd"
+EXPORTS
+	Supports
+	Load
+	Unload
+	AmxLoad
+	AmxUnload
