@@ -4,9 +4,9 @@ COMPILER_FLAGS = -c -m32 -fPIC -O3 -DLINUX -w -I./include/ -I./include/SDK/amx/
 LIBRARIES = -lrt
 CRYPTOPP_SRC_DIR = ./src/cryptopp
 
-all: hash clean
+all: mcmd clean
 
-hash:
+mcmd:
 	$(GCC) $(COMPILER_FLAGS) ./include/SDK/amx/*.c
 	$(GCC) $(COMPILER_FLAGS) ./include/SDK/*.c
 	$(GCC) $(COMPILER_FLAGS) ./src/*.c

@@ -45,25 +45,28 @@ _declspec(naked) void _mcmd_opct_jmp_hook(void) // we don't want a prologue here
 	}
 }
 #else
-
-__asm__( // FUCK AT&T !!!!!!!!
-	"_mcmd_opct_jmp_hook:\n\t"
-	"movl	-0x14(%%ebp),%%edx\n\t"
-	"push	%%edx\n\t"
-	"movl	0xC(%%ebp),%%ecx\n\t"
-	"push	%%ecx\n\t"
-	"call	_mcmd_engine_detour\n\t"
-	"pop	%%ecx\n\t"
-	"pop	%%edx\n\t"
-	"movl	%[engine],%%edx\n\t"
-	"test	%%eax,%%eax\n\t"
-	"je		NOPROC%=\n\t"
-	"movl	0x8(%%edx),%%eax\n\t"
-	"jmp	*%%eax\n\t"
-	"NOPROC%=:\n\t"
-	"movl	0x4(%%esi),%%eax\n\t"
-	"jmp	*%%eax" : : [engine] "m" (engine) : );		
-
+void _mcmd_opct_jmp_hook(void)
+{
+	__asm__ volatile( // FUCK AT&T LOL !!!!!!!!
+		"movl	-0x14(%%ebp),%%edx\n\t"
+		"push	%%edx\n\t"
+		"movl	0xC(%%ebp),%%ecx\n\t"
+		"push	%%ecx\n\t"
+		"call	_mcmd_engine_detour\n\t"
+		"pop	%%ecx\n\t"
+		"pop	%%edx\n\t"
+		"movl	%[engine],%%edx\n\t"
+		"test	%%eax,%%eax\n\t"
+		"je		NOPROC%=\n\t"
+		"movl	0x8(%%edx),%%eax\n\t"
+		"jmp	*%%eax\n\t"
+		"NOPROC%=:\n\t"
+		"movl	0x4(%%esi),%%eax\n\t"
+		"jmp	*%%eax"
+		: 
+		: [engine] "m" (engine) 
+		: );	
+}
 #endif
 
 int mcmd_engine_install(void)
@@ -82,22 +85,25 @@ int mcmd_engine_install(void)
 	engine->fail = mcmd_memory_scan("\x83\xFE\x10\x7C\x90\x8B\x44\x24\x10\x5F\x5E", "xxxxxxxxxxx") + 0x5;
 	// Get the address of where we going to jump upon mcmd done
 	engine->success = mcmd_memory_scan("\x83\xC4\x08\xC2\x08\x00\x5F", "xxxxxxx") + 0x6;
-#else // 0x80A0A80
-	engine->start = 0x80A0A93; 
-	engine->fail = 0x80A0B44;
-	engine->success = 0x80A0B3D;
+#else // 0x80A0A80 function start, 0.3z-R2-2
+	// 0x80A0A93
+	engine->start = mcmd_memory_scan("\x8B\x7D\x00\x89\xF3\xEB\x00\x8D\xB6\x00\x00\x00\x00\x83\xC3\x00\x8D\x46\x00\x39\xC3\x0F\x8F\x00\x00\x00\x00\x8B\x13\x85\xD2\x74\x00\x89\x14\x24\x8D\x45\x00\x89\x44\x24\x00\xB8\x00\x00\x00\x00\x89\x44\x24\x00\xE8\x00\x00\x00\x00\x85\xC0\x75\x00\x89\x7C\x24\x00\x31\xC0\x31\xC9\x89\x44\x24\x00", "xx?xxx?xxxxxxxx?xx?xxxx????xxxxx?xxxxx?xxx?x????xxx?x????xxx?xxx?xxxxxxx?");
+	// 0x80A0B44
+	engine->fail = mcmd_memory_scan("\x85\xD2\x0F\x84\x00\x00\x00\x00\xB8\x00\x00\x00\x00\xEB\x00\x8B\x45\x00", "xxxx????x????x?xx?") + 0xF;
+	// 0x80A0B3D
+	engine->success = engine->fail - 0x7;
 #endif
 
-	if(engine->start == 0 || engine->fail == 0 || engine->success == 0)
+	if(engine->start <= 0 || engine->fail <= 0 || engine->success <= 0)
 		return 0;
 
 #if defined __WIN32__ || defined _WIN32 || defined WIN32
 	len = engine->fail - engine->start;
 #else
-	len = engine->success - engine->start; // Success codes comes before fail in the linux code
+	len = engine->success - engine->start; // Success code comes before fail mov on linux
 #endif
 	
-	// Calculate distance to our Detour
+	// Calculate distance to our detour, -0x5 for jmp size
 	distance = ((mcmd_dword)_mcmd_opct_jmp_hook - engine->start) - 0x5;
 
 	// Make memory writeable
@@ -110,18 +116,19 @@ int mcmd_engine_install(void)
 		iCount = ((size_t)len / iPageSize) * iPageSize + iPageSize * 2;
 	mprotect((void *)iAddr, (size_t)iCount, PROT_EXEC | PROT_READ | PROT_WRITE);
 #endif
-	// Write call + our address
+	// Write jmp + our address
 	*(mcmd_byte *)engine->start = 0xE9;
 	*(mcmd_dword *)(engine->start + 0x1) = distance;
 
-	// nop everything after our jmp to to end address
+	// nop code after our jmp to end address
 	for(i = 0x5; i < len; ++i)
 		*(mcmd_byte *)(engine->start + i) = 0x90;
 
-	// Restore old permission
+	// Be nice and restore old permission, TODO: restore on linux too?
 #if defined __WIN32__ || defined _WIN32 || defined WIN32
 	VirtualProtect((mcmd_byte *)engine->start, len, protback, &protdummy);
 #endif
+
 	// Just make sure everything's reset
 	engine->gamemode = NULL;
 	engine->gamemode_idx = 0;
@@ -136,7 +143,7 @@ int mcmd_engine_install(void)
 
 int _mcmd_engine_detour(int playerid, char *cmdtext)
 {
-	char	cmd[PAWN_MAX_FUNC_SIZE] = "_ce";
+	char	cmd[PAWN_MAX_FUNC_SIZE] = PAWN_CMD_PREFIX;
 	AMX		*cmd_amx = NULL;
 	int		cmd_idx = 0;
 	int		i;
@@ -183,7 +190,7 @@ int _mcmd_engine_detour(int playerid, char *cmdtext)
 		return 1;
 	}
 
-	if(cmd_amx == NULL) // if not callback + command doesn't exist return "SERVER: Unknown Command"
+	if(cmd_amx == NULL) // if no callback + command doesn't exist: return "SERVER: Unknown Command"
 		return 0;
 
 execcmd:
@@ -198,7 +205,9 @@ execcmd:
 
 void mcmd_engine_dump_memory(void)
 {
-	if(engine == NULL) return;
+	if(engine == NULL) 
+		return;
+		
 	logprintf("[mcmd] Dump engine->start: 0x%X", engine->start);
 	logprintf("[mcmd] Dump engine->fail: 0x%X", engine->fail);
 	logprintf("[mcmd] Dump engine->success: 0x%X", engine->success);
@@ -206,7 +215,7 @@ void mcmd_engine_dump_memory(void)
 	logprintf("[mcmd] Dump engine->gamemode_idx: %i", engine->gamemode_idx);
 }
 
-		/* intel
+		/* intel ?
 	__asm__ volatile(
 		".intel_syntax noprefix\n\t"
 		"mov	edx,[ebx-14h]\n\t"

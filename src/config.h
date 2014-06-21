@@ -28,12 +28,14 @@
 	#ifndef NULL
 		#define NULL 0
 	#endif
+	#include <dlfcn.h>
 	
 #endif
 
 #define PAWN_MAX_FUNC_SIZE 32
 #define PAWN_MAX_AMX 17
 #define PAWN_MAX_PLAYERS 1000
+#define PAWN_CMD_PREFIX "_ce"
 
 typedef unsigned long mcmd_dword;
 typedef unsigned char mcmd_byte;

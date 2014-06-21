@@ -13,40 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 #include "memory.h"
 
 mcmd_dword mcmd_memory_scan(char *pattern, char *mask)
 {
 	mcmd_dword	i;
-#if defined __WIN32__ || defined _WIN32 || defined WIN32
-	mcmd_dword	address;
 	mcmd_dword	size;
+	mcmd_dword	address;
+#if defined __WIN32__ || defined _WIN32 || defined WIN32
 	MODULEINFO	info = { 0 };
 
 	address = (mcmd_dword)GetModuleHandle(NULL);
 	GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &info, sizeof(MODULEINFO));
 	size = (mcmd_dword)info.SizeOfImage;
 #else
-	void*		address;
-	mcmd_dword	size;
-	
-	address = dlopen(NULL);
-	size = 0x128000;
+	address = 0x804b480; // TODO: get SA-MP base and size dynamically
+	size = 0x8128B80 - address;
 #endif
-
 	for(i = 0; i < size; i++)
+	{
 		if(_mcmd_memory_compare((mcmd_byte *)(address + i), (mcmd_byte *)pattern, mask))
 			return (mcmd_dword)(address + i);
-
+	}
 	return 0;
 }
 
-mcmd_inline int _mcmd_memory_compare(const mcmd_byte* data, const mcmd_byte* pattern, const char* mask)
+mcmd_inline int _mcmd_memory_compare(mcmd_byte *data, const mcmd_byte *pattern, const char *mask)
 {
 	for(; *mask; ++mask, ++data, ++pattern)
+	{
 		if(*mask == 'x' && *data != *pattern)
 			return 0;
-
+	}
 	return (*mask) == 0;
 }
