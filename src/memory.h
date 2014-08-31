@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#if defined __WIN32__ || defined _WIN32 || defined WIN32
+#ifdef SYS_WIN32
 	#include <Windows.h>
 	#include <Psapi.h>
 #else
@@ -27,6 +27,5 @@
 #endif
 
 mcmd_dword mcmd_memory_scan(char *pattern, char *mask);
-mcmd_inline int _mcmd_memory_compare(mcmd_byte *data, const mcmd_byte *pattern, const char *mask);
 
-#endif
+#endif /* _MEMORY_H_ */

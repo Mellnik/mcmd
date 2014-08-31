@@ -21,4 +21,4 @@
 
 cell AMX_NATIVE_CALL _mcmd_native_last_request_time(AMX *amx, cell *params);
 
-#endif
+#endif /* _NATIVES_H_ */

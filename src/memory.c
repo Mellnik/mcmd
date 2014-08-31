@@ -16,35 +16,37 @@
  
 #include "memory.h"
 
+static mcmd_inline int _mcmd_memory_compare(mcmd_byte *data, 
+					const mcmd_byte *pattern,
+					const char *mask)
+{
+	for (; *mask; ++mask, ++data, ++pattern)
+		if(*mask == 'x' && *data != *pattern)
+			return 0;
+
+	return (*mask) == 0;
+}
+
 mcmd_dword mcmd_memory_scan(char *pattern, char *mask)
 {
-	mcmd_dword	i;
-	mcmd_dword	size;
-	mcmd_dword	address;
-#if defined __WIN32__ || defined _WIN32 || defined WIN32
+	mcmd_dword i;
+	mcmd_dword size;
+	mcmd_dword address;
+#ifdef SYS_WIN32
 	MODULEINFO	info = { 0 };
 
 	address = (mcmd_dword)GetModuleHandle(NULL);
-	GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &info, sizeof(MODULEINFO));
+	GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL),
+			&info, sizeof(MODULEINFO));
 	size = (mcmd_dword)info.SizeOfImage;
 #else
-	address = 0x804b480; // TODO: get SA-MP base and size dynamically
-	size = 0x8128B80 - address;
+	address = 0x804b4b0;
+	size = 0x8147823 - address;
 #endif
-	for(i = 0; i < size; i++)
-	{
-		if(_mcmd_memory_compare((mcmd_byte *)(address + i), (mcmd_byte *)pattern, mask))
+	for (i = 0; i < size; ++i)
+		if (_mcmd_memory_compare((mcmd_byte *)(address + i),
+					(mcmd_byte *)pattern, mask))
 			return (mcmd_dword)(address + i);
-	}
-	return 0;
-}
 
-mcmd_inline int _mcmd_memory_compare(mcmd_byte *data, const mcmd_byte *pattern, const char *mask)
-{
-	for(; *mask; ++mask, ++data, ++pattern)
-	{
-		if(*mask == 'x' && *data != *pattern)
-			return 0;
-	}
-	return (*mask) == 0;
+	return 0;
 }

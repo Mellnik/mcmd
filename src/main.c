@@ -15,12 +15,18 @@
  */
 
 #include <stdlib.h>
+
 #include "engine.h"
 #include "natives.h"
 #include "main.h"
 
 logprintf_t logprintf;
 extern void *pAMXFunctions;
+
+AMX_NATIVE_INFO mcmd_natives[] = {
+	{"GetPlayerLastRequestTime", _mcmd_native_last_request_time},
+	{NULL, NULL}
+};
 
 PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports(void)
 {
@@ -32,17 +38,15 @@ PLUGIN_EXPORT int PLUGIN_CALL Load(void **ppData)
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	logprintf = (logprintf_t)ppData[PLUGIN_DATA_LOGPRINTF];
 
-	if(mcmd_engine_install() != 0)
-	{
-		logprintf("[mcmd] Plugin successfully loaded "PLUGIN_VERSION" (Compiled on "__DATE__", "__TIME__").");
-		mcmd_engine_dump_memory();
-	}
-	else
-	{
-		logprintf("[mcmd] Engine failed to initalize. Aborting server start, memory may has been corrupt.");
+	if (engine_install() != 0) {
+		logprintf("[mcmd] Plugin successfully loaded "PLUGIN_VERSION""\
+			"(Compiled on "__DATE__", "__TIME__").");
+	} else {
+		logprintf("[mcmd] Engine failed to initalize. "\
+						"Aborting server start, memory may has been corrupt.");
 
-		mcmd_engine_dump_memory();
-		free(engine);
+		engine_dump_memory();
+		engine_exit();
 
 		exit(EXIT_FAILURE);
 	}
@@ -51,37 +55,27 @@ PLUGIN_EXPORT int PLUGIN_CALL Load(void **ppData)
 
 PLUGIN_EXPORT void PLUGIN_CALL Unload(void)
 {
-	free(engine);
+	engine_exit();
 
 	logprintf("[mcmd] Plugin unloaded.");
 }
-
-AMX_NATIVE_INFO mcmd_natives[] =
-{
-	{"GetPlayerLastRequestTime", _mcmd_native_last_request_time},
-	{NULL, NULL}
-};
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX *amx)
 {
 	int i;
 	int amx_OprcIdx, amx_OgmiIdx;
 
-	for(i = 0; i < PAWN_MAX_AMX; ++i)
-	{
-		if(engine->scripts[i] == NULL)
-		{
-			engine->scripts[i] = amx;
+	for (i = 0; i < PAWN_MAX_AMX; ++i)
+		if (engine_pawn->scripts[i] == NULL) {
+			engine_pawn->scripts[i] = amx;
 			break;
 		}
-	}
 
-	if(engine->gamemode == NULL && 
-		amx_FindPublic(amx, "OnPlayerRequestCommand", &amx_OprcIdx) == AMX_ERR_NONE && 
-		amx_FindPublic(amx, "OnGameModeInit", &amx_OgmiIdx) == AMX_ERR_NONE)
-	{
-		engine->gamemode = amx;
-		engine->gamemode_idx = amx_OprcIdx;
+	if (engine_pawn->gamemode == NULL 
+			&& amx_FindPublic(amx, "OnPlayerRequestCommand", &amx_OprcIdx) == AMX_ERR_NONE 
+			&& amx_FindPublic(amx, "OnGameModeInit", &amx_OgmiIdx) == AMX_ERR_NONE) {
+		engine_pawn->gamemode = amx;
+		engine_pawn->gamemode_idx = amx_OprcIdx;
 	}
 	return amx_Register(amx, mcmd_natives, -1);
 }
@@ -89,19 +83,17 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX *amx)
 PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX *amx)
 {
 	int i;
-	if(amx == engine->gamemode)
-	{
-		engine->gamemode = NULL;
-		engine->gamemode_idx = 0;
+
+	if (amx == engine_pawn->gamemode) {
+		engine_pawn->gamemode = NULL;
+		engine_pawn->gamemode_idx = 0;
 	}
 	
-	for(i = 0; i < PAWN_MAX_AMX; i++)
-	{
-		if(engine->scripts[i] == amx)
-		{
-			engine->scripts[i] = NULL;
+	for (i = 0; i < PAWN_MAX_AMX; ++i)
+		if (engine_pawn->scripts[i] == amx) {
+			engine_pawn->scripts[i] = NULL;
 			break;
 		}
-	}
+
 	return AMX_ERR_NONE;
 }

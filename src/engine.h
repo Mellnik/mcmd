@@ -18,24 +18,28 @@
 #define _ENGINE_H_
 
 #include "config.h"
+
 #include <SDK/plugin.h>
 
 #define INVALID_REQ_TIME 0x7FFFFFFF
 
-int mcmd_engine_install(void);
-int _mcmd_engine_detour(int playerid, char *cmdtext);
-void mcmd_engine_dump_memory(void);
+int engine_install(void);
+void engine_exit(void);
+void engine_dump_memory(void);
 
-struct mcmd_engine_t {
+struct engine_addr_data {
 	mcmd_dword	start;
 	mcmd_dword	fail;
 	mcmd_dword	success;
+};
+
+struct engine_pawn_rel {
 	AMX*		gamemode;
 	int			gamemode_idx;
 	AMX*		scripts[PAWN_MAX_AMX];
 	int			reqtime[PAWN_MAX_PLAYERS];
 };
 
-extern struct mcmd_engine_t *engine;
+extern struct engine_pawn_rel *engine_pawn;
 
-#endif
+#endif /* _ENGINE_H_ */

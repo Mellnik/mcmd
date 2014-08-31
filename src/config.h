@@ -19,7 +19,8 @@
  
 #if defined __WIN32__ || defined _WIN32 || defined WIN32
 
-    #define WIN32_LEAN_AND_MEAN
+	#define SYS_WIN32
+    #define WIN32_LEAN_AND_MEAN /* for Windows.h */
 	#define mcmd_inline __inline
 
 #else
@@ -40,10 +41,13 @@
 typedef unsigned long mcmd_dword;
 typedef unsigned char mcmd_byte;
 
-// Useful links:
-// https://sourceware.org/gdb/onlinedocs/gdb/Machine-Code.html
-// https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
-// http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
-// http://stackoverflow.com/questions/16354348/how-to-pass-variables-to-intel-format-inline-asm-code-compiled-with-gcc
+/*
+ *  Useful links:
+ *
+ *	https://sourceware.org/gdb/onlinedocs/gdb/Machine-Code.html
+ *	https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
+ *	http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
+ *	http://stackoverflow.com/questions/16354348/how-to-pass-variables-to-intel-format-inline-asm-code-compiled-with-gcc
+ */
 
-#endif
+#endif /* _CONFIG_H_ */

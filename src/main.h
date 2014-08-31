@@ -23,11 +23,12 @@
 #define PARAM_CHECK(c, n) \
 	if(params[0] != (c * 4)) \
 	{ \
-		logprintf("[mcmd] Wrong paramenter(s) supplied in %s. Expected %i but found %i.", n, c, params[0] / 4); \
+		logprintf("[mcmd] Wrong paramenter(s) supplied in %s. Expected %i but found %i.",\
+					n, c, params[0] / 4); \
 		return 0; \
 	} \
 
 typedef void (*logprintf_t)(const char*, ...);
 extern logprintf_t logprintf;
 
-#endif
+#endif /* _MAIN_H_ */

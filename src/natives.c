@@ -15,11 +15,12 @@
  */
 
 #include <time.h>
+
 #include "engine.h"
 #include "natives.h"
 #include "main.h"
 
-// native GetPlayerLastRequestTime(playerid);
+/* native GetPlayerLastRequestTime(playerid); */
 cell AMX_NATIVE_CALL _mcmd_native_last_request_time(AMX *amx, cell *params)
 {
 	int playerid;
@@ -28,14 +29,13 @@ cell AMX_NATIVE_CALL _mcmd_native_last_request_time(AMX *amx, cell *params)
 
 	playerid = (int)params[1];
 
-	if(playerid < 0 || playerid > 1000)
-	{
+	if (playerid < 0 || playerid > 1000) {
 		logprintf("[mcmd] Invalid playerid in GetPlayerLastRequestTime.");
 		return 0;
 	}
 
-	if(engine->reqtime[playerid] == INVALID_REQ_TIME)
+	if(engine_pawn->reqtime[playerid] == INVALID_REQ_TIME)
 		return INVALID_REQ_TIME;
 
-	return (cell)((int)time(NULL) - engine->reqtime[playerid]);
+	return (cell)((int)time(NULL) - engine_pawn->reqtime[playerid]);
 }
