@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <assert.h>
 
 #include "engine.h"
@@ -50,7 +51,10 @@ static void engine_env_init(void)
 		engine_pawn->reqtime[i] = INVALID_REQ_TIME;
 }
 
-static void engine_grab_addresses(mcmd_dword *start, mcmd_dword *fail, mcmd_dword *success)
+static void engine_grab_addresses(
+			mcmd_dword *start, 
+			mcmd_dword *fail, 
+			mcmd_dword *success)
 {
 #ifdef SYS_WIN32
 	/* Address of where we hook in */
@@ -188,8 +192,10 @@ void engine_opct_hook(void)
 
 int engine_install(void)
 {
-	mcmd_dword protback, distance, len, i;
-
+	mcmd_dword distance, len, i;
+#ifdef SYS_WIN32
+	mcmd_dword protback;
+#endif	
 	engine_env_init();
 
 	engine_grab_addresses(&engine_addr->start, &engine_addr->fail, &engine_addr->success);
