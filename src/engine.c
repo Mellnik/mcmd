@@ -161,32 +161,25 @@ void engine_opct_hook(void)
 {
 	__asm__ volatile( /* EBP-14h = cmdtext, EBP+0Ch = playerid */
 		".intel_syntax noprefix\n"
-		"add esp, 8\n"
 		"pop ebp\n"
 		"mov edx, [ebp-0x14]\n"
+		"mov ecx, [ebp-0xC]\n"
+		"push ebp\n"
 		"push edx\n"
-		"mov ecx, [ebp+0xC]\n"
 		"push ecx\n"
 		"call engine_command_detour\n"
 		"pop ecx\n"
 		"pop edx\n"
+		"pop ebp\n"
 		"mov edx, [engine_addr+0x4]\n"
-		"jmp [edx+0x3]\n"
-		".att_syntax\n");
-
-		/*
-		"pop edx\n"
-		"mov edx, [engine+0x4]\n"
-		"add edx, 0x3\n"
-		"jmp edx\n"
 		"test eax, eax\n"
-		"je NOPROC%=\n"
-		"mov eax, [edx+0x8]\n"
-		"jmp [eax+0x3]\n"
-		"NOPROC%=:\n"
-		"mov eax, [edx+0x4]\n"
-		"jmp eax\n"*/
-		//".att_syntax\n");
+		"je noproc\n"
+		"mov ebx, [edx+0x8]\n"
+		"jmp ebx\n"
+		"noproc:\n"
+		"mov ebx, [edx+0x4]\n"
+		"jmp ebx\n"
+		".att_syntax\n");
 }
 #endif
 
