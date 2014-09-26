@@ -78,7 +78,7 @@ static void engine_grab_addresses(
 #endif
 }
 
-static int engine_command_detour(int playerid, char *cmdtext)
+int engine_command_detour(int playerid, char *cmdtext)
 {
 	char	cmd[PAWN_MAX_FUNC_SIZE] = PAWN_CMD_PREFIX;
 	AMX		*cmd_amx = NULL;
@@ -87,7 +87,7 @@ static int engine_command_detour(int playerid, char *cmdtext)
 	int		pos = 0;
 	cell	amx_rel = 0;
 	cell	amx_ret = 0;
-
+	
 	while (cmdtext[++pos] != ' ' && pos < PAWN_MAX_FUNC_SIZE - 3)
 		cmd[pos + 2] = tolower(cmdtext[pos]);
 
@@ -157,28 +157,26 @@ _declspec(naked) void engine_opct_hook(void)
 	}
 }
 #else
+
 void engine_opct_hook(void)
 {
 	__asm__ volatile( /* EBP-14h = cmdtext, EBP+0Ch = playerid */
 		".intel_syntax noprefix\n"
-		"pop ebp\n"
 		"mov edx, [ebp-0x14]\n"
-		"mov ecx, [ebp-0xC]\n"
-		"push ebp\n"
 		"push edx\n"
+		"mov ecx, [ebp+0xC]\n"
 		"push ecx\n"
 		"call engine_command_detour\n"
 		"pop ecx\n"
 		"pop edx\n"
-		"pop ebp\n"
-		"mov edx, [engine_addr+0x4]\n"
 		"test eax, eax\n"
+		"mov edx, [engine_addr]\n"
 		"je noproc\n"
-		"mov ebx, [edx+0x8]\n"
-		"jmp ebx\n"
+		"mov eax, [edx+0x8]\n"
+		"jmp eax\n"
 		"noproc:\n"
-		"mov ebx, [edx+0x4]\n"
-		"jmp ebx\n"
+		"mov eax, [edx+0x4]\n"
+		"jmp eax\n"
 		".att_syntax\n");
 }
 #endif

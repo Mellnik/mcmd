@@ -2,7 +2,6 @@ GCC = gcc
 OUTPUT = "bin/mcmd.so"
 COMPILER_FLAGS = -c -m32 -fPIC -O3 -DLINUX -w -I./include/ -I./include/SDK/amx/
 LIBRARIES = -lrt
-CRYPTOPP_SRC_DIR = ./src/cryptopp
 
 all: mcmd clean
 
